@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://161.35.45.169:5000/api",
+  baseURL: "https://api.thelafxindex.co.uk/api",
 });
 
 export default API;

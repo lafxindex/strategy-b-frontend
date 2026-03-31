@@ -72,8 +72,7 @@ function TradeDetailPage() {
   if (!trade) return <div style={{ padding: 40 }}>Loading...</div>;
 
   return (
-    <div style={{ maxWidth: 1000, margin: "40px auto", fontFamily: "Arial, 
-sans-serif", padding: 20 }}>
+    <div style={{ maxWidth: 1000, margin: "40px auto", fontFamily: "Arial, sans-serif", padding: 20 }}>
       <Link to="/" style={{ textDecoration: "none", color: "#2563eb" }}>← 
 Back to Dashboard</Link>
 

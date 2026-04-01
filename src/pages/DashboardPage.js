@@ -4,12 +4,17 @@ import API from "../api";
 import Header from "../components/Header";
 import NewTradeModal from "../components/NewTradeModal";
 
-const statusStyles = {
-  Planned: "#6b7280",
-  Active: "#2563eb",
-  Partial: "#d97706",
-  Closed: "#16a34a",
-  Invalidated: "#dc2626",
+const getTradeColor = (trade) => {
+  if (trade.result === "Win") return "#16a34a"; // green
+  if (trade.result === "Loss") return "#dc2626"; // red
+  if (trade.result === "Break Even") return "#eab308"; // yellow
+
+  if (trade.status === "Invalidated") return "#dc2626"; // red
+  if (trade.status === "Discarded") return "#9ca3af"; // gray
+  if (trade.status === "Active") return "#2563eb"; // blue
+  if (trade.status === "Partial") return "#d97706"; // orange
+
+  return "#6b7280"; // planned default gray
 };
 
 function DashboardPage() {
@@ -17,6 +22,7 @@ function DashboardPage() {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [filter, setFilter] = useState("All");
 
+  // Replace with real auth later
   const isAdmin = true;
 
   const fetchTrades = async () => {
@@ -42,6 +48,9 @@ function DashboardPage() {
     const wins = trades.filter((t) => t.result === "Win").length;
     const losses = trades.filter((t) => t.result === "Loss").length;
     const breakEven = trades.filter((t) => t.result === "Break Even").length;
+
+    const wonTrades = wins;
+    const lostTrades = losses;
 
     const completed = wins + losses + breakEven;
     const winRate = completed > 0 ? ((wins / completed) * 100).toFixed(0) 
@@ -99,6 +108,8 @@ value;
       wins,
       losses,
       breakEven,
+      wonTrades,
+      lostTrades,
       winRate,
       netR,
       todayR,
@@ -123,8 +134,6 @@ value;
     },
     { label: "Active Trades", value: metrics.activeTrades, tone: "#2563eb" 
 },
-    { label: "Closed Trades", value: metrics.closedTrades, tone: "#16a34a" 
-},
   ];
 
   return (
@@ -144,7 +153,8 @@ value;
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16,
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 16,
             marginBottom: 28,
           }}
         >
@@ -180,6 +190,73 @@ value;
               </div>
             </div>
           ))}
+
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: 18,
+              padding: "20px 18px",
+              boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
+              border: "1px solid rgba(229,231,235,0.8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontSize: 28,
+                  fontWeight: 800,
+                  color: "#16a34a",
+                  lineHeight: 1.1,
+                }}
+              >
+                {metrics.wonTrades}
+              </div>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "#6b7280",
+                  marginTop: 8,
+                }}
+              >
+                Won Trades
+              </div>
+            </div>
+
+            <div
+              style={{
+                width: 1,
+                alignSelf: "stretch",
+                background: "#d4af37",
+                opacity: 0.9,
+              }}
+            />
+
+            <div style={{ flex: 1, textAlign: "right" }}>
+              <div
+                style={{
+                  fontSize: 28,
+                  fontWeight: 800,
+                  color: "#dc2626",
+                  lineHeight: 1.1,
+                }}
+              >
+                {metrics.lostTrades}
+              </div>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "#6b7280",
+                  marginTop: 8,
+                }}
+              >
+                Lost Trades
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
@@ -202,12 +279,22 @@ value;
               }}
             >
               <div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: 
-"#111827" }}>
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    color: "#111827",
+                  }}
+                >
                   Trade Feed
                 </div>
-                <div style={{ fontSize: 14, color: "#6b7280", marginTop: 4 
-}}>
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: "#6b7280",
+                    marginTop: 4,
+                  }}
+                >
                   Public trade log and activity
                 </div>
               </div>
@@ -229,13 +316,14 @@ value;
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(250px, 
+1fr))",
                   gap: 16,
                 }}
               >
                 {filteredTrades.map((trade, index) => {
-                  const statusColor = statusStyles[trade.status] || 
-"#6b7280";
+                  const statusColor = getTradeColor(trade);
+
                   return (
                     <Link
                       key={trade.id}
@@ -343,18 +431,32 @@ Date(trade.created_at).toLocaleDateString(undefined, {
                 border: "1px solid rgba(229,231,235,0.8)",
               }}
             >
-              <div style={{ fontSize: 18, fontWeight: 800, color: 
-"#111827" }}>
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: "#111827",
+                }}
+              >
                 Reports
               </div>
 
               <div style={{ display: "grid", gap: 14, marginTop: 18 }}>
-                <ReportRow label="Today" value={`${metrics.todayR >= 0 ? 
-"+" : ""}${metrics.todayR.toFixed(1)}R`} />
-                <ReportRow label="This Week" value={`${metrics.weekR >= 0 
-? "+" : ""}${metrics.weekR.toFixed(1)}R`} />
-                <ReportRow label="This Month" value={`${metrics.monthR >= 
-0 ? "+" : ""}${metrics.monthR.toFixed(1)}R`} />
+                <ReportRow
+                  label="Today"
+                  value={`${metrics.todayR >= 0 ? "+" : 
+""}${metrics.todayR.toFixed(1)}R`}
+                />
+                <ReportRow
+                  label="This Week"
+                  value={`${metrics.weekR >= 0 ? "+" : 
+""}${metrics.weekR.toFixed(1)}R`}
+                />
+                <ReportRow
+                  label="This Month"
+                  value={`${metrics.monthR >= 0 ? "+" : 
+""}${metrics.monthR.toFixed(1)}R`}
+                />
               </div>
             </div>
 
@@ -367,15 +469,26 @@ Date(trade.created_at).toLocaleDateString(undefined, {
                 border: "1px solid rgba(229,231,235,0.8)",
               }}
             >
-              <div style={{ fontSize: 18, fontWeight: 800, color: 
-"#111827" }}>
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: "#111827",
+                }}
+              >
                 Breakdown
               </div>
 
               <div style={{ display: "grid", gap: 14, marginTop: 18 }}>
-                <ReportRow label="Wins" value={metrics.wins} />
-                <ReportRow label="Losses" value={metrics.losses} />
-                <ReportRow label="Break Even" value={metrics.breakEven} />
+                <ReportRow label="Wins" value={metrics.wins} 
+valueColor="#16a34a" />
+                <ReportRow label="Losses" value={metrics.losses} 
+valueColor="#dc2626" />
+                <ReportRow
+                  label="Break Even"
+                  value={metrics.breakEven}
+                  valueColor="#eab308"
+                />
               </div>
             </div>
 
@@ -388,34 +501,41 @@ Date(trade.created_at).toLocaleDateString(undefined, {
                 border: "1px solid rgba(229,231,235,0.8)",
               }}
             >
-              <div style={{ fontSize: 18, fontWeight: 800, color: 
-"#111827" }}>
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: "#111827",
+                }}
+              >
                 Filters
               </div>
 
-              <div style={{ display: "grid", gap: 10, marginTop: 18 }}>
-                {["All", "Planned", "Active", "Partial", "Closed", 
-"Invalidated"].map(
-                  (item) => (
-                    <button
-                      key={item}
-                      onClick={() => setFilter(item)}
-                      style={{
-                        textAlign: "left",
-                        padding: "11px 12px",
-                        borderRadius: 12,
-                        border: filter === item ? "1px solid #111827" : 
-"1px solid #e5e7eb",
-                        background: filter === item ? "#111827" : "#fff",
-                        color: filter === item ? "#fff" : "#111827",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {item}
-                    </button>
-                  )
-                )}
+              <div style={{ marginTop: 18 }}>
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    borderRadius: 12,
+                    border: "1px solid #e5e7eb",
+                    background: "#fff",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#111827",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <option value="All">All</option>
+                  <option value="Planned">Planned</option>
+                  <option value="Active">Active</option>
+                  <option value="Partial">Partial</option>
+                  <option value="Closed">Closed</option>
+                  <option value="Invalidated">Invalidated</option>
+                  <option value="Discarded">Discarded</option>
+                </select>
               </div>
 
               {isAdmin && (
@@ -450,7 +570,7 @@ Date(trade.created_at).toLocaleDateString(undefined, {
   );
 }
 
-function ReportRow({ label, value }) {
+function ReportRow({ label, value, valueColor = "#111827" }) {
   return (
     <div
       style={{
@@ -461,7 +581,7 @@ function ReportRow({ label, value }) {
       }}
     >
       <div style={{ fontSize: 14, color: "#6b7280" }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: 800, color: "#111827" 
+      <div style={{ fontSize: 16, fontWeight: 800, color: valueColor 
 }}>{value}</div>
     </div>
   );

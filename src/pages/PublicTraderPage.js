@@ -42,8 +42,7 @@ function PublicTraderPage() {
 
     const wins = trades.filter((t) => t.result === "Win").length;
     const losses = trades.filter((t) => t.result === "Loss").length;
-    const breakEven = trades.filter((t) => t.result === "Break 
-Even").length;
+    const breakEven = trades.filter((t) => t.result === "Break Even").length;
 
     const completed = wins + losses + breakEven;
     const winRate = completed > 0 ? ((wins / completed) * 100).toFixed(0) 
@@ -334,8 +333,7 @@ value;
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1.55fr) minmax(280px, 
-0.75fr)",
+            gridTemplateColumns: "minmax(0, 1.55fr) minmax(280px, 0.75fr)",
             gap: 22,
             alignItems: "start",
           }}
@@ -378,8 +376,7 @@ value;
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(250px, 
-1fr))",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
                   gap: 16,
                 }}
               >

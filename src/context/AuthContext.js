@@ -1,32 +1,60 @@
 import React, { createContext, useContext, useEffect, useState } from 
 "react";
+import API from "../api";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem("token", token);
-    } else {
-      localStorage.removeItem("token");
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setLoading(false);
+      return;
     }
-  }, [token]);
+
+    API.get("/me")
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to restore session:", err);
+        localStorage.removeItem("token");
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   const login = (data) => {
-    setToken(data.token);
-    setUser(data.user);
+    if (data?.token) {
+      localStorage.setItem("token", data.token);
+    }
+
+    if (data?.user) {
+      setUser(data.user);
+    }
   };
 
   const logout = () => {
-    setToken(null);
+    localStorage.removeItem("token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser,
+        loading,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

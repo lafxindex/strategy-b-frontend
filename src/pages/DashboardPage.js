@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import API from "../api";
 import Header from "../components/Header";
 import NewTradeModal from "../components/NewTradeModal";
+import { useAuth } from "../context/AuthContext";
 
 const getTradeColor = (trade) => {
   if (trade.result === "Win") return "#16a34a"; // green
@@ -22,8 +23,8 @@ function DashboardPage() {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [filter, setFilter] = useState("All");
 
-  // Replace with real auth later
-  const isAdmin = true;
+  const { user } = useAuth();
+  const isAdmin = !!user;
 
   const fetchTrades = async () => {
     try {
@@ -42,8 +43,6 @@ function DashboardPage() {
     const totalTrades = trades.length;
     const activeTrades = trades.filter((t) => t.status === 
 "Active").length;
-    const closedTrades = trades.filter((t) => t.status === 
-"Closed").length;
 
     const wins = trades.filter((t) => t.result === "Win").length;
     const losses = trades.filter((t) => t.result === "Loss").length;
@@ -104,7 +103,6 @@ value;
     return {
       totalTrades,
       activeTrades,
-      closedTrades,
       wins,
       losses,
       breakEven,

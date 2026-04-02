@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import API from "../api";
+import { useAuth } from "../context/AuthContext";
 
 const getTradeColor = (trade) => {
   if (trade.result === "Win") return "#16a34a"; // green
@@ -29,6 +30,9 @@ function TradeDetailPage() {
     r_multiple: "",
     after_chart_url: "",
   });
+
+  const { user } = useAuth();
+  const isAdmin = !!user;
 
   const fetchTrade = useCallback(async () => {
     try {
@@ -389,143 +393,149 @@ Date(update.created_at).toLocaleString(undefined, {
           </div>
 
           <div style={{ display: "grid", gap: 18 }}>
-            <form
-              onSubmit={handleUpdateSubmit}
-              style={{
-                background: "#fff",
-                padding: 20,
-                borderRadius: 18,
-                boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
-                border: "1px solid rgba(229,231,235,0.8)",
-                display: "grid",
-                gap: 12,
-              }}
-            >
-              <h3 style={{ margin: 0, color: "#111827" }}>Add Update</h3>
+            {isAdmin && (
+              <>
+                <form
+                  onSubmit={handleUpdateSubmit}
+                  style={{
+                    background: "#fff",
+                    padding: 20,
+                    borderRadius: 18,
+                    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
+                    border: "1px solid rgba(229,231,235,0.8)",
+                    display: "grid",
+                    gap: 12,
+                  }}
+                >
+                  <h3 style={{ margin: 0, color: "#111827" }}>Add 
+Update</h3>
 
-              <select
-                value={updateForm.status}
-                onChange={(e) =>
-                  setUpdateForm((prev) => ({ ...prev, status: 
+                  <select
+                    value={updateForm.status}
+                    onChange={(e) =>
+                      setUpdateForm((prev) => ({ ...prev, status: 
 e.target.value }))
-                }
-                style={fieldStyle}
-              >
-                <option value="">Select Status</option>
-                <option value="Planned">Planned</option>
-                <option value="Active">Active</option>
-                <option value="Partial">Partial</option>
-                <option value="Closed">Closed</option>
-                <option value="Invalidated">Invalidated</option>
-                <option value="Discarded">Discarded</option>
-              </select>
+                    }
+                    style={fieldStyle}
+                  >
+                    <option value="">Select Status</option>
+                    <option value="Planned">Planned</option>
+                    <option value="Active">Active</option>
+                    <option value="Partial">Partial</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Invalidated">Invalidated</option>
+                    <option value="Discarded">Discarded</option>
+                  </select>
 
-              <textarea
-                rows="4"
-                placeholder="Update comment"
-                value={updateForm.comment}
-                onChange={(e) =>
-                  setUpdateForm((prev) => ({ ...prev, comment: 
+                  <textarea
+                    rows="4"
+                    placeholder="Update comment"
+                    value={updateForm.comment}
+                    onChange={(e) =>
+                      setUpdateForm((prev) => ({ ...prev, comment: 
 e.target.value }))
-                }
-                style={{ ...fieldStyle, resize: "vertical" }}
-              />
+                    }
+                    style={{ ...fieldStyle, resize: "vertical" }}
+                  />
 
-              <input
-                type="text"
-                placeholder="TradingView link (optional)"
-                value={updateForm.chart_url}
-                onChange={(e) =>
-                  setUpdateForm((prev) => ({ ...prev, chart_url: 
+                  <input
+                    type="text"
+                    placeholder="TradingView link (optional)"
+                    value={updateForm.chart_url}
+                    onChange={(e) =>
+                      setUpdateForm((prev) => ({ ...prev, chart_url: 
 e.target.value }))
-                }
-                style={fieldStyle}
-              />
+                    }
+                    style={fieldStyle}
+                  />
 
-              <button
-                type="submit"
-                style={{
-                  padding: "12px 16px",
-                  background: "#111827",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                Post Update
-              </button>
-            </form>
+                  <button
+                    type="submit"
+                    style={{
+                      padding: "12px 16px",
+                      background: "#111827",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 12,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Post Update
+                  </button>
+                </form>
 
-            <form
-              onSubmit={handleCloseTrade}
-              style={{
-                background: "#fff",
-                padding: 20,
-                borderRadius: 18,
-                boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
-                border: "1px solid rgba(229,231,235,0.8)",
-                display: "grid",
-                gap: 12,
-              }}
-            >
-              <h3 style={{ margin: 0, color: "#111827" }}>Close Trade</h3>
+                <form
+                  onSubmit={handleCloseTrade}
+                  style={{
+                    background: "#fff",
+                    padding: 20,
+                    borderRadius: 18,
+                    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
+                    border: "1px solid rgba(229,231,235,0.8)",
+                    display: "grid",
+                    gap: 12,
+                  }}
+                >
+                  <h3 style={{ margin: 0, color: "#111827" }}>Close 
+Trade</h3>
 
-              <select
-                value={closeForm.result}
-                onChange={(e) =>
-                  setCloseForm((prev) => ({ ...prev, result: 
+                  <select
+                    value={closeForm.result}
+                    onChange={(e) =>
+                      setCloseForm((prev) => ({ ...prev, result: 
 e.target.value }))
-                }
-                style={fieldStyle}
-              >
-                <option value="">Select Result</option>
-                <option value="Win">Win</option>
-                <option value="Loss">Loss</option>
-                <option value="Break Even">Break Even</option>
-              </select>
+                    }
+                    style={fieldStyle}
+                  >
+                    <option value="">Select Result</option>
+                    <option value="Win">Win</option>
+                    <option value="Loss">Loss</option>
+                    <option value="Break Even">Break Even</option>
+                  </select>
 
-              <input
-                type="number"
-                step="0.1"
-                placeholder="R Multiple"
-                value={closeForm.r_multiple}
-                onChange={(e) =>
-                  setCloseForm((prev) => ({ ...prev, r_multiple: 
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="R Multiple"
+                    value={closeForm.r_multiple}
+                    onChange={(e) =>
+                      setCloseForm((prev) => ({ ...prev, r_multiple: 
 e.target.value }))
-                }
-                style={fieldStyle}
-              />
+                    }
+                    style={fieldStyle}
+                  />
 
-              <input
-                type="text"
-                placeholder="Final TradingView link (optional)"
-                value={closeForm.after_chart_url}
-                onChange={(e) =>
-                  setCloseForm((prev) => ({
-                    ...prev,
-                    after_chart_url: e.target.value,
-                  }))
-                }
-                style={fieldStyle}
-              />
+                  <input
+                    type="text"
+                    placeholder="Final TradingView link (optional)"
+                    value={closeForm.after_chart_url}
+                    onChange={(e) =>
+                      setCloseForm((prev) => ({
+                        ...prev,
+                        after_chart_url: e.target.value,
+                      }))
+                    }
+                    style={fieldStyle}
+                  />
 
-              <button
-                type="submit"
-                style={{
-                  padding: "12px 16px",
-                  background: "#16a34a",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                Close Trade
-              </button>
-            </form>
+                  <button
+                    type="submit"
+                    style={{
+                      padding: "12px 16px",
+                      background: "#16a34a",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 12,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Close Trade
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </div>

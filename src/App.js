@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import PublicTraderPage from "./pages/PublicTraderPage";
 import TraderDirectoryPage from "./pages/TraderDirectoryPage";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -34,6 +35,15 @@ function App() {
           element={
             <ProtectedRoute>
               <ProfileSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute>
+              <AdminUsersPage />
             </ProtectedRoute>
           }
         />

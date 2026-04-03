@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Header({ onOpenTradeModal, isAdmin = true }) {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const isSuperAdmin = user?.role === "super_admin";
 
   return (
     <div
@@ -54,6 +55,12 @@ function Header({ onOpenTradeModal, isAdmin = true }) {
 
       {isAdmin && (
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          {isSuperAdmin && (
+            <Link to="/admin/users" style={secondaryLinkStyle}>
+              Users
+            </Link>
+          )}
+
           <Link to="/settings" style={secondaryLinkStyle}>
             Settings
           </Link>

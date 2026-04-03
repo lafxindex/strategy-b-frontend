@@ -1,6 +1,10 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Header({ onOpenTradeModal, isAdmin = true }) {
+  const { logout } = useAuth();
+
   return (
     <div
       style={{
@@ -43,31 +47,64 @@ function Header({ onOpenTradeModal, isAdmin = true }) {
               marginTop: 4,
             }}
           >
-            Public journal and performance dashboard
+            Private dashboard and performance journal
           </div>
         </div>
       </div>
 
       {isAdmin && (
-        <button
-          onClick={onOpenTradeModal}
-          style={{
-            background: "#111827",
-            color: "#fff",
-            border: "none",
-            borderRadius: 12,
-            padding: "12px 18px",
-            fontWeight: 700,
-            fontSize: 14,
-            cursor: "pointer",
-            boxShadow: "0 10px 25px rgba(17,24,39,0.15)",
-          }}
-        >
-          + New Trade
-        </button>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <Link to="/settings" style={secondaryLinkStyle}>
+            Settings
+          </Link>
+
+          <button
+            onClick={onOpenTradeModal}
+            style={{
+              background: "#111827",
+              color: "#fff",
+              border: "none",
+              borderRadius: 12,
+              padding: "12px 18px",
+              fontWeight: 700,
+              fontSize: 14,
+              cursor: "pointer",
+              boxShadow: "0 10px 25px rgba(17,24,39,0.15)",
+            }}
+          >
+            + New Trade
+          </button>
+
+          <button
+            onClick={logout}
+            style={{
+              background: "#fff",
+              color: "#111827",
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: "12px 16px",
+              fontWeight: 700,
+              fontSize: 14,
+              cursor: "pointer",
+            }}
+          >
+            Logout
+          </button>
+        </div>
       )}
     </div>
   );
 }
+
+const secondaryLinkStyle = {
+  textDecoration: "none",
+  background: "#fff",
+  color: "#111827",
+  border: "1px solid #e5e7eb",
+  borderRadius: 12,
+  padding: "12px 16px",
+  fontWeight: 700,
+  fontSize: 14,
+};
 
 export default Header;

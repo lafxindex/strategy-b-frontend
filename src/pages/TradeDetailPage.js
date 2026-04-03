@@ -4,9 +4,9 @@ import API from "../api";
 import { useAuth } from "../context/AuthContext";
 
 const getTradeColor = (trade) => {
-  if (trade.result === "Win") return "#16a34a"; // green
-  if (trade.result === "Loss") return "#dc2626"; // red
-  if (trade.result === "Break Even") return "#eab308"; // yellow
+  if (trade.result === "Win") return "#16a34a";
+  if (trade.result === "Loss") return "#dc2626";
+  if (trade.result === "Break Even") return "#eab308";
 
   if (trade.status === "Invalidated") return "#dc2626";
   if (trade.status === "Discarded") return "#9ca3af";
@@ -17,9 +17,10 @@ const getTradeColor = (trade) => {
 };
 
 function TradeDetailPage() {
-  const { id } = useParams();
+  const { id, slug } = useParams();
   const [trade, setTrade] = useState(null);
   const [updates, setUpdates] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [updateForm, setUpdateForm] = useState({
     comment: "",
     status: "",
@@ -33,16 +34,27 @@ function TradeDetailPage() {
 
   const { user } = useAuth();
   const isAdmin = !!user;
+  const isPublicScoped = !!slug;
 
   const fetchTrade = useCallback(async () => {
     try {
-      const res = await API.get(`/trades/${id}`);
+      const endpoint = isPublicScoped
+        ? `/public/${slug}/trades/${id}`
+        : `/trades/${id}`;
+
+      const res = await API.get(endpoint);
+
       setTrade(res.data.trade);
       setUpdates(res.data.updates || []);
+      if (res.data.user) {
+        setProfile(res.data.user);
+      } else {
+        setProfile(null);
+      }
     } catch (err) {
       console.error("Failed to fetch trade:", err);
     }
-  }, [id]);
+  }, [id, slug, isPublicScoped]);
 
   useEffect(() => {
     fetchTrade();
@@ -110,6 +122,8 @@ function TradeDetailPage() {
   }
 
   const tradeColor = getTradeColor(trade);
+  const backHref = isPublicScoped ? `/trader/${slug}` : "/dashboard";
+  const pageTitle = isPublicScoped && profile ? profile.display_name : "Lafx Index Trade Journal";
 
   return (
     <div
@@ -133,12 +147,12 @@ function TradeDetailPage() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <img
-              src="/logo.png"
-              alt="Lafx Index"
+              src={profile?.avatar_url || "/logo.png"}
+              alt={pageTitle}
               style={{
                 width: 42,
                 height: 42,
-                objectFit: "contain",
+                objectFit: "cover",
                 borderRadius: 10,
                 background: "#fff",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
@@ -153,7 +167,7 @@ function TradeDetailPage() {
                   lineHeight: 1.1,
                 }}
               >
-                Lafx Index Trade Journal
+                {pageTitle}
               </div>
               <div
                 style={{
@@ -168,7 +182,7 @@ function TradeDetailPage() {
           </div>
 
           <Link
-            to="/"
+            to={backHref}
             style={{
               textDecoration: "none",
               color: "#2563eb",
@@ -176,7 +190,7 @@ function TradeDetailPage() {
               fontSize: 14,
             }}
           >
-            ← Back to Dashboard
+            ← Back
           </Link>
         </div>
 
@@ -255,8 +269,7 @@ function TradeDetailPage() {
             <InfoCard
               label="R Multiple"
               value={
-                trade.r_multiple !== null && trade.r_multiple !== 
-undefined
+                trade.r_multiple !== null && trade.r_multiple !== undefined
                   ? trade.r_multiple
                   : "-"
               }
@@ -321,8 +334,7 @@ undefined
               border: "1px solid rgba(229,231,235,0.8)",
             }}
           >
-            <h2 style={{ marginTop: 0, marginBottom: 18, color: "#111827" 
-}}>
+            <h2 style={{ marginTop: 0, marginBottom: 18, color: "#111827" }}>
               Timeline
             </h2>
 
@@ -352,13 +364,11 @@ undefined
                           flexWrap: "wrap",
                         }}
                       >
-                        <div style={{ fontWeight: 800, color: "#111827" 
-}}>
+                        <div style={{ fontWeight: 800, color: "#111827" }}>
                           {update.status || "Update"}
                         </div>
                         <div style={{ fontSize: 13, color: "#9ca3af" }}>
-                          {new 
-Date(update.created_at).toLocaleString(undefined, {
+                          {new Date(update.created_at).toLocaleString(undefined, {
                             year: "numeric",
                             month: "short",
                             day: "numeric",
@@ -393,7 +403,7 @@ Date(update.created_at).toLocaleString(undefined, {
           </div>
 
           <div style={{ display: "grid", gap: 18 }}>
-            {isAdmin && (
+            {isAdmin && !isPublicScoped && (
               <>
                 <form
                   onSubmit={handleUpdateSubmit}
@@ -407,14 +417,12 @@ Date(update.created_at).toLocaleString(undefined, {
                     gap: 12,
                   }}
                 >
-                  <h3 style={{ margin: 0, color: "#111827" }}>Add 
-Update</h3>
+                  <h3 style={{ margin: 0, color: "#111827" }}>Add Update</h3>
 
                   <select
                     value={updateForm.status}
                     onChange={(e) =>
-                      setUpdateForm((prev) => ({ ...prev, status: 
-e.target.value }))
+                      setUpdateForm((prev) => ({ ...prev, status: e.target.value }))
                     }
                     style={fieldStyle}
                   >
@@ -432,8 +440,7 @@ e.target.value }))
                     placeholder="Update comment"
                     value={updateForm.comment}
                     onChange={(e) =>
-                      setUpdateForm((prev) => ({ ...prev, comment: 
-e.target.value }))
+                      setUpdateForm((prev) => ({ ...prev, comment: e.target.value }))
                     }
                     style={{ ...fieldStyle, resize: "vertical" }}
                   />
@@ -443,8 +450,7 @@ e.target.value }))
                     placeholder="TradingView link (optional)"
                     value={updateForm.chart_url}
                     onChange={(e) =>
-                      setUpdateForm((prev) => ({ ...prev, chart_url: 
-e.target.value }))
+                      setUpdateForm((prev) => ({ ...prev, chart_url: e.target.value }))
                     }
                     style={fieldStyle}
                   />
@@ -477,14 +483,12 @@ e.target.value }))
                     gap: 12,
                   }}
                 >
-                  <h3 style={{ margin: 0, color: "#111827" }}>Close 
-Trade</h3>
+                  <h3 style={{ margin: 0, color: "#111827" }}>Close Trade</h3>
 
                   <select
                     value={closeForm.result}
                     onChange={(e) =>
-                      setCloseForm((prev) => ({ ...prev, result: 
-e.target.value }))
+                      setCloseForm((prev) => ({ ...prev, result: e.target.value }))
                     }
                     style={fieldStyle}
                   >
@@ -500,8 +504,7 @@ e.target.value }))
                     placeholder="R Multiple"
                     value={closeForm.r_multiple}
                     onChange={(e) =>
-                      setCloseForm((prev) => ({ ...prev, r_multiple: 
-e.target.value }))
+                      setCloseForm((prev) => ({ ...prev, r_multiple: e.target.value }))
                     }
                     style={fieldStyle}
                   />

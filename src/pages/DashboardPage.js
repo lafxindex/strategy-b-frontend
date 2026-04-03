@@ -6,17 +6,27 @@ import NewTradeModal from "../components/NewTradeModal";
 import { useAuth } from "../context/AuthContext";
 
 const getTradeColor = (trade) => {
-  if (trade.result === "Win") return "#16a34a"; // green
-  if (trade.result === "Loss") return "#dc2626"; // red
-  if (trade.result === "Break Even") return "#eab308"; // yellow
+  if (trade.result === "Win") return "#16a34a";
+  if (trade.result === "Loss") return "#dc2626";
+  if (trade.result === "Break Even") return "#eab308";
 
-  if (trade.status === "Invalidated") return "#dc2626"; // red
-  if (trade.status === "Discarded") return "#9ca3af"; // gray
-  if (trade.status === "Active") return "#2563eb"; // blue
-  if (trade.status === "Partial") return "#d97706"; // orange
+  if (trade.status === "Invalidated") return "#dc2626";
+  if (trade.status === "Discarded") return "#9ca3af";
+  if (trade.status === "Active") return "#2563eb";
+  if (trade.status === "Partial") return "#d97706";
 
-  return "#6b7280"; // planned default gray
+  return "#6b7280";
 };
+
+function shouldShowRR(trade) {
+  return (
+    trade.status === "Closed" &&
+    (trade.result === "Win" || trade.result === "Loss") &&
+    trade.r_multiple !== null &&
+    trade.r_multiple !== undefined &&
+    trade.r_multiple !== ""
+  );
+}
 
 function DashboardPage() {
   const [trades, setTrades] = useState([]);
@@ -41,8 +51,7 @@ function DashboardPage() {
 
   const metrics = useMemo(() => {
     const totalTrades = trades.length;
-    const activeTrades = trades.filter((t) => t.status === 
-"Active").length;
+    const activeTrades = trades.filter((t) => t.status === "Active").length;
 
     const wins = trades.filter((t) => t.result === "Win").length;
     const losses = trades.filter((t) => t.result === "Loss").length;
@@ -52,8 +61,7 @@ function DashboardPage() {
     const lostTrades = losses;
 
     const completed = wins + losses + breakEven;
-    const winRate = completed > 0 ? ((wins / completed) * 100).toFixed(0) 
-: "0";
+    const winRate = completed > 0 ? ((wins / completed) * 100).toFixed(0) : "0";
 
     const netR = trades.reduce((sum, trade) => {
       const value = parseFloat(trade.r_multiple);
@@ -74,16 +82,14 @@ function DashboardPage() {
     const todayR = trades.reduce((sum, trade) => {
       const created = new Date(trade.created_at);
       const value = parseFloat(trade.r_multiple);
-      if (sameDay(created, now) && !Number.isNaN(value)) return sum + 
-value;
+      if (sameDay(created, now) && !Number.isNaN(value)) return sum + value;
       return sum;
     }, 0);
 
     const weekR = trades.reduce((sum, trade) => {
       const created = new Date(trade.created_at);
       const value = parseFloat(trade.r_multiple);
-      if (created >= startOfWeek && !Number.isNaN(value)) return sum + 
-value;
+      if (created >= startOfWeek && !Number.isNaN(value)) return sum + value;
       return sum;
     }, 0);
 
@@ -122,16 +128,14 @@ value;
   }, [trades, filter]);
 
   const summaryCards = [
-    { label: "Total Trades", value: metrics.totalTrades, tone: "#111827" 
-},
+    { label: "Total Trades", value: metrics.totalTrades, tone: "#111827" },
     { label: "Win Rate", value: `${metrics.winRate}%`, tone: "#111827" },
     {
       label: "Net R",
       value: `${metrics.netR >= 0 ? "+" : ""}${metrics.netR.toFixed(1)}R`,
       tone: metrics.netR >= 0 ? "#16a34a" : "#dc2626",
     },
-    { label: "Active Trades", value: metrics.activeTrades, tone: "#2563eb" 
-},
+    { label: "Active Trades", value: metrics.activeTrades, tone: "#2563eb" },
   ];
 
   return (
@@ -213,13 +217,7 @@ value;
               >
                 {metrics.wonTrades}
               </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  color: "#6b7280",
-                  marginTop: 8,
-                }}
-              >
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>
                 Won Trades
               </div>
             </div>
@@ -244,13 +242,7 @@ value;
               >
                 {metrics.lostTrades}
               </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  color: "#6b7280",
-                  marginTop: 8,
-                }}
-              >
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>
                 Lost Trades
               </div>
             </div>
@@ -293,7 +285,7 @@ value;
                     marginTop: 4,
                   }}
                 >
-                  Public trade log and activity
+                  Private trade log and activity
                 </div>
               </div>
             </div>
@@ -325,10 +317,7 @@ value;
                     <Link
                       key={trade.id}
                       to={`/trades/${trade.id}`}
-                      style={{
-                        textDecoration: "none",
-                        color: "inherit",
-                      }}
+                      style={{ textDecoration: "none", color: "inherit" }}
                     >
                       <div
                         style={{
@@ -339,60 +328,74 @@ value;
                           boxShadow: "0 6px 18px rgba(15, 23, 42, 0.08)",
                           transition: "all 0.2s ease",
                           transform:
-                            index % 2 === 0 ? "translateY(0px)" : 
-"translateY(10px)",
+                            index % 2 === 0 ? "translateY(0px)" : "translateY(10px)",
                           cursor: "pointer",
-                          minHeight: 115,
+                          minHeight: 130,
                           display: "flex",
                           flexDirection: "column",
                           justifyContent: "space-between",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 
-"translateY(-4px)";
+                          e.currentTarget.style.transform = "translateY(-4px)";
                           e.currentTarget.style.boxShadow =
                             "0 16px 32px rgba(15, 23, 42, 0.14)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.transform =
-                            index % 2 === 0 ? "translateY(0px)" : 
-"translateY(10px)";
+                            index % 2 === 0 ? "translateY(0px)" : "translateY(10px)";
                           e.currentTarget.style.boxShadow =
                             "0 6px 18px rgba(15, 23, 42, 0.08)";
                         }}
                       >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                            gap: 10,
-                          }}
-                        >
+                        <div>
                           <div
                             style={{
-                              fontWeight: 800,
-                              fontSize: 17,
-                              color: "#111827",
-                              lineHeight: 1.2,
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "flex-start",
+                              gap: 10,
                             }}
                           >
-                            {trade.instrument} — {trade.direction}
+                            <div
+                              style={{
+                                fontWeight: 800,
+                                fontSize: 17,
+                                color: "#111827",
+                                lineHeight: 1.2,
+                              }}
+                            >
+                              {trade.instrument} — {trade.direction}
+                            </div>
+
+                            <span
+                              style={{
+                                background: statusColor,
+                                color: "#fff",
+                                padding: "5px 9px",
+                                borderRadius: 999,
+                                fontSize: 11,
+                                fontWeight: 800,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {trade.status}
+                            </span>
                           </div>
 
-                          <span
-                            style={{
-                              background: statusColor,
-                              color: "#fff",
-                              padding: "5px 9px",
-                              borderRadius: 999,
-                              fontSize: 11,
-                              fontWeight: 800,
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {trade.status}
-                          </span>
+                          {shouldShowRR(trade) && (
+                            <div
+                              style={{
+                                marginTop: 12,
+                                fontSize: 14,
+                                fontWeight: 800,
+                                color:
+                                  trade.result === "Win" ? "#16a34a" : "#dc2626",
+                              }}
+                            >
+                              {parseFloat(trade.r_multiple) > 0 ? "+" : ""}
+                              {trade.r_multiple}R
+                            </div>
+                          )}
                         </div>
 
                         <div
@@ -403,8 +406,7 @@ value;
                           }}
                         >
                           Created:{" "}
-                          {new 
-Date(trade.created_at).toLocaleDateString(undefined, {
+                          {new Date(trade.created_at).toLocaleDateString(undefined, {
                             year: "numeric",
                             month: "short",
                             day: "numeric",
@@ -428,31 +430,22 @@ Date(trade.created_at).toLocaleDateString(undefined, {
                 border: "1px solid rgba(229,231,235,0.8)",
               }}
             >
-              <div
-                style={{
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: "#111827",
-                }}
-              >
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>
                 Reports
               </div>
 
               <div style={{ display: "grid", gap: 14, marginTop: 18 }}>
                 <ReportRow
                   label="Today"
-                  value={`${metrics.todayR >= 0 ? "+" : 
-""}${metrics.todayR.toFixed(1)}R`}
+                  value={`${metrics.todayR >= 0 ? "+" : ""}${metrics.todayR.toFixed(1)}R`}
                 />
                 <ReportRow
                   label="This Week"
-                  value={`${metrics.weekR >= 0 ? "+" : 
-""}${metrics.weekR.toFixed(1)}R`}
+                  value={`${metrics.weekR >= 0 ? "+" : ""}${metrics.weekR.toFixed(1)}R`}
                 />
                 <ReportRow
                   label="This Month"
-                  value={`${metrics.monthR >= 0 ? "+" : 
-""}${metrics.monthR.toFixed(1)}R`}
+                  value={`${metrics.monthR >= 0 ? "+" : ""}${metrics.monthR.toFixed(1)}R`}
                 />
               </div>
             </div>
@@ -466,21 +459,13 @@ Date(trade.created_at).toLocaleDateString(undefined, {
                 border: "1px solid rgba(229,231,235,0.8)",
               }}
             >
-              <div
-                style={{
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: "#111827",
-                }}
-              >
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>
                 Breakdown
               </div>
 
               <div style={{ display: "grid", gap: 14, marginTop: 18 }}>
-                <ReportRow label="Wins" value={metrics.wins} 
-valueColor="#16a34a" />
-                <ReportRow label="Losses" value={metrics.losses} 
-valueColor="#dc2626" />
+                <ReportRow label="Wins" value={metrics.wins} valueColor="#16a34a" />
+                <ReportRow label="Losses" value={metrics.losses} valueColor="#dc2626" />
                 <ReportRow
                   label="Break Even"
                   value={metrics.breakEven}
@@ -498,13 +483,7 @@ valueColor="#dc2626" />
                 border: "1px solid rgba(229,231,235,0.8)",
               }}
             >
-              <div
-                style={{
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: "#111827",
-                }}
-              >
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>
                 Filters
               </div>
 
@@ -578,8 +557,7 @@ function ReportRow({ label, value, valueColor = "#111827" }) {
       }}
     >
       <div style={{ fontSize: 14, color: "#6b7280" }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: 800, color: valueColor 
-}}>{value}</div>
+      <div style={{ fontSize: 16, fontWeight: 800, color: valueColor }}>{value}</div>
     </div>
   );
 }

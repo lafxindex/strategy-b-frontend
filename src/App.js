@@ -17,6 +17,7 @@ function App() {
         <Route path="/" element={<TraderDirectoryPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/trader/:slug" element={<PublicTraderPage />} />
+        <Route path="/trader/:slug/trades/:id" element={<TradeDetailPage />} />
         <Route path="/trades/:id" element={<TradeDetailPage />} />
 
         <Route

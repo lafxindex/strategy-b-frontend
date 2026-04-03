@@ -38,10 +38,10 @@ function DashboardPage() {
 
   const fetchTrades = async () => {
     try {
-      const res = await API.get("/trades");
+      const res = await API.get("/me/trades");
       setTrades(res.data);
     } catch (err) {
-      console.error("Failed to fetch trades:", err);
+      console.error("Failed to fetch user trades:", err);
     }
   };
 
@@ -181,13 +181,7 @@ function DashboardPage() {
               >
                 {card.value}
               </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  color: "#6b7280",
-                  marginTop: 8,
-                }}
-              >
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>
                 {card.label}
               </div>
             </div>
@@ -276,7 +270,7 @@ function DashboardPage() {
                     color: "#111827",
                   }}
                 >
-                  Trade Feed
+                  My Trade Feed
                 </div>
                 <div
                   style={{
@@ -285,7 +279,7 @@ function DashboardPage() {
                     marginTop: 4,
                   }}
                 >
-                  Private trade log and activity
+                  Your private trade history and activity
                 </div>
               </div>
             </div>
@@ -431,7 +425,7 @@ function DashboardPage() {
               }}
             >
               <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>
-                Reports
+                My Reports
               </div>
 
               <div style={{ display: "grid", gap: 14, marginTop: 18 }}>

@@ -53,6 +53,9 @@ function PublicTraderPage() {
     const losses = trades.filter((t) => t.result === "Loss").length;
     const breakEven = trades.filter((t) => t.result === "Break Even").length;
 
+    const wonTrades = wins;
+    const lostTrades = losses;
+
     const completed = wins + losses + breakEven;
     const winRate = completed > 0 ? ((wins / completed) * 100).toFixed(0) : "0";
 
@@ -105,6 +108,8 @@ function PublicTraderPage() {
       wins,
       losses,
       breakEven,
+      wonTrades,
+      lostTrades,
       winRate,
       netR,
       todayR,
@@ -325,6 +330,61 @@ function PublicTraderPage() {
               </div>
             </div>
           ))}
+
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: 18,
+              padding: "20px 18px",
+              boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
+              border: "1px solid rgba(229,231,235,0.8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontSize: 28,
+                  fontWeight: 800,
+                  color: "#16a34a",
+                  lineHeight: 1.1,
+                }}
+              >
+                {metrics.wonTrades}
+              </div>
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>
+                Won Trades
+              </div>
+            </div>
+
+            <div
+              style={{
+                width: 1,
+                alignSelf: "stretch",
+                background: "#d4af37",
+                opacity: 0.9,
+              }}
+            />
+
+            <div style={{ flex: 1, textAlign: "right" }}>
+              <div
+                style={{
+                  fontSize: 28,
+                  fontWeight: 800,
+                  color: "#dc2626",
+                  lineHeight: 1.1,
+                }}
+              >
+                {metrics.lostTrades}
+              </div>
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>
+                Lost Trades
+              </div>
+            </div>
+          </div>
         </div>
 
         <div

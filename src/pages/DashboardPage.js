@@ -124,7 +124,11 @@ function DashboardPage() {
 
   const filteredTrades = useMemo(() => {
     if (filter === "All") return trades;
-    return trades.filter((trade) => trade.status === filter);
+    if (filter === "Planned") return trades.filter((trade) => trade.status === "Planned");
+    if (filter === "Active") return trades.filter((trade) => trade.status === "Active");
+    if (filter === "Won") return trades.filter((trade) => trade.result === "Win");
+    if (filter === "Lost") return trades.filter((trade) => trade.result === "Loss");
+    return trades;
   }, [trades, filter]);
 
   const summaryCards = [
@@ -501,10 +505,8 @@ function DashboardPage() {
                   <option value="All">All</option>
                   <option value="Planned">Planned</option>
                   <option value="Active">Active</option>
-                  <option value="Partial">Partial</option>
-                  <option value="Closed">Closed</option>
-                  <option value="Invalidated">Invalidated</option>
-                  <option value="Discarded">Discarded</option>
+                  <option value="Won">Won</option>
+                  <option value="Lost">Lost</option>
                 </select>
               </div>
 

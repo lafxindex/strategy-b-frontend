@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import API from "../api";
 
@@ -31,19 +31,25 @@ function PublicTraderPage() {
   const [trades, setTrades] = useState([]);
   const [filter, setFilter] = useState("All");
 
-  useEffect(() => {
-    const fetchTraderPage = async () => {
-      try {
-        const res = await API.get(`/public/${slug}`);
-        setProfile(res.data.user);
-        setTrades(res.data.trades || []);
-      } catch (err) {
-        console.error("Failed to fetch trader page:", err);
-      }
-    };
-
-    fetchTraderPage();
+  const fetchTraderPage = useCallback(async () => {
+    try {
+      const res = await API.get(`/public/${slug}`);
+      setProfile(res.data.user);
+      setTrades(res.data.trades || []);
+    } catch (err) {
+      console.error("Failed to fetch trader page:", err);
+    }
   }, [slug]);
+
+  useEffect(() => {
+    fetchTraderPage();
+
+    const interval = setInterval(() => {
+      fetchTraderPage();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [fetchTraderPage]);
 
   const metrics = useMemo(() => {
     const totalTrades = trades.length;
@@ -465,17 +471,6 @@ function PublicTraderPage() {
                           display: "flex",
                           flexDirection: "column",
                           justifyContent: "space-between",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "translateY(-4px)";
-                          e.currentTarget.style.boxShadow =
-                            "0 16px 32px rgba(15, 23, 42, 0.14)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform =
-                            index % 2 === 0 ? "translateY(0px)" : "translateY(10px)";
-                          e.currentTarget.style.boxShadow =
-                            "0 6px 18px rgba(15, 23, 42, 0.08)";
                         }}
                       >
                         <div>

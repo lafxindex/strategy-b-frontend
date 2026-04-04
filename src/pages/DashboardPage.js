@@ -47,6 +47,12 @@ function DashboardPage() {
 
   useEffect(() => {
     fetchTrades();
+
+    const interval = setInterval(() => {
+      fetchTrades();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const metrics = useMemo(() => {
@@ -332,17 +338,6 @@ function DashboardPage() {
                           display: "flex",
                           flexDirection: "column",
                           justifyContent: "space-between",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "translateY(-4px)";
-                          e.currentTarget.style.boxShadow =
-                            "0 16px 32px rgba(15, 23, 42, 0.14)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform =
-                            index % 2 === 0 ? "translateY(0px)" : "translateY(10px)";
-                          e.currentTarget.style.boxShadow =
-                            "0 6px 18px rgba(15, 23, 42, 0.08)";
                         }}
                       >
                         <div>

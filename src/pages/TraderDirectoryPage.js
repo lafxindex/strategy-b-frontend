@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -9,73 +9,104 @@ function TraderDirectoryPage() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
+  const fetchTraders = useCallback(async () => {
+    try {
+      const res = await API.get(`/public/traders?t=${Date.now()}`);
+      const traderList = res.data || [];
+      setTraders(traderList);
+
+      const statsEntries = await Promise.all(
+        traderList.map(async (trader) => {
+          try {
+            const traderRes = await API.get(
+              `/public/${trader.public_slug}?t=${Date.now()}`
+            );
+            const trades = traderRes.data?.trades || [];
+
+            let wins = 0;
+            let losses = 0;
+            let breakEven = 0;
+
+            trades.forEach((t) => {
+              if (t.result === "Win") wins++;
+              if (t.result === "Loss") losses++;
+              if (t.result === "Break Even") breakEven++;
+            });
+
+            const completed = wins + losses + breakEven;
+            const winRate =
+              completed > 0 ? ((wins / completed) * 100).toFixed(0) : "0";
+
+            const netR = trades.reduce((sum, trade) => {
+              const value = parseFloat(trade.r_multiple);
+              return sum + (Number.isNaN(value) ? 0 : value);
+            }, 0);
+
+            return [
+              trader.public_slug,
+              {
+                netR,
+                winRate,
+                totalTrades: trades.length,
+              },
+            ];
+          } catch (err) {
+            console.error(
+              `Failed to fetch stats for ${trader.public_slug}:`,
+              err
+            );
+            return [
+              trader.public_slug,
+              {
+                netR: 0,
+                winRate: "0",
+                totalTrades: 0,
+              },
+            ];
+          }
+        })
+      );
+
+      setTraderStats(Object.fromEntries(statsEntries));
+    } catch (err) {
+      console.error("Failed to fetch traders:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchTraders = async () => {
-      try {
-        const res = await API.get("/public/traders");
-        const traderList = res.data || [];
-        setTraders(traderList);
+    fetchTraders();
 
-        const statsEntries = await Promise.all(
-          traderList.map(async (trader) => {
-            try {
-              const traderRes = await API.get(`/public/${trader.public_slug}`);
-              const trades = traderRes.data?.trades || [];
+    const interval = setInterval(() => {
+      fetchTraders();
+    }, 5000);
 
-              let wins = 0;
-              let losses = 0;
-              let breakEven = 0;
+    const handleFocus = () => {
+      fetchTraders();
+    };
 
-              trades.forEach((t) => {
-                if (t.result === "Win") wins++;
-                if (t.result === "Loss") losses++;
-                if (t.result === "Break Even") breakEven++;
-              });
-
-              const completed = wins + losses + breakEven;
-              const winRate =
-                completed > 0 ? ((wins / completed) * 100).toFixed(0) : "0";
-
-              const netR = trades.reduce((sum, trade) => {
-                const value = parseFloat(trade.r_multiple);
-                return sum + (Number.isNaN(value) ? 0 : value);
-              }, 0);
-
-              return [
-                trader.public_slug,
-                {
-                  netR,
-                  winRate,
-                  totalTrades: trades.length,
-                },
-              ];
-            } catch (err) {
-              console.error(
-                `Failed to fetch stats for ${trader.public_slug}:`,
-                err
-              );
-              return [
-                trader.public_slug,
-                {
-                  netR: 0,
-                  winRate: "0",
-                  totalTrades: 0,
-                },
-              ];
-            }
-          })
-        );
-
-        setTraderStats(Object.fromEntries(statsEntries));
-      } catch (err) {
-        console.error("Failed to fetch traders:", err);
-      } finally {
-        setLoading(false);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchTraders();
       }
     };
 
-    fetchTraders();
-  }, []);
+    const handlePageShow = () => {
+      fetchTraders();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("pageshow", handlePageShow);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("pageshow", handlePageShow);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchTraders]);
 
   const sortedTraders = useMemo(() => {
     return [...traders].sort((a, b) => {

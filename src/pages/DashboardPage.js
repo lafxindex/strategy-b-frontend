@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../api";
 import Header from "../components/Header";
@@ -36,14 +36,14 @@ function DashboardPage() {
   const { user } = useAuth();
   const isAdmin = !!user;
 
-  const fetchTrades = async () => {
+  const fetchTrades = useCallback(async () => {
     try {
-      const res = await API.get("/me/trades");
-      setTrades(res.data);
+      const res = await API.get(`/me/trades?t=${Date.now()}`);
+      setTrades(res.data || []);
     } catch (err) {
       console.error("Failed to fetch user trades:", err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTrades();
@@ -52,8 +52,25 @@ function DashboardPage() {
       fetchTrades();
     }, 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+    const handleFocus = () => {
+      fetchTrades();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchTrades();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchTrades]);
 
   const metrics = useMemo(() => {
     const totalTrades = trades.length;

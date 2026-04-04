@@ -33,7 +33,7 @@ function PublicTraderPage() {
 
   const fetchTraderPage = useCallback(async () => {
     try {
-      const res = await API.get(`/public/${slug}`);
+      const res = await API.get(`/public/${slug}?t=${Date.now()}`);
       setProfile(res.data.user);
       setTrades(res.data.trades || []);
     } catch (err) {
@@ -48,7 +48,24 @@ function PublicTraderPage() {
       fetchTraderPage();
     }, 5000);
 
-    return () => clearInterval(interval);
+    const handleFocus = () => {
+      fetchTraderPage();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchTraderPage();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [fetchTraderPage]);
 
   const metrics = useMemo(() => {

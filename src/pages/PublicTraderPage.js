@@ -58,12 +58,18 @@ function PublicTraderPage() {
       }
     };
 
+    const handlePageShow = () => {
+      fetchTraderPage();
+    };
+
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("pageshow", handlePageShow);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("pageshow", handlePageShow);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [fetchTraderPage]);
@@ -300,23 +306,12 @@ function PublicTraderPage() {
 
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             {profile.twitter_url && (
-              <a
-                href={profile.twitter_url}
-                target="_blank"
-                rel="noreferrer"
-                style={socialButtonStyle}
-              >
+              <a href={profile.twitter_url} target="_blank" rel="noreferrer" style={socialButtonStyle}>
                 Twitter
               </a>
             )}
-
             {profile.instagram_url && (
-              <a
-                href={profile.instagram_url}
-                target="_blank"
-                rel="noreferrer"
-                style={socialButtonStyle}
-              >
+              <a href={profile.instagram_url} target="_blank" rel="noreferrer" style={socialButtonStyle}>
                 Instagram
               </a>
             )}
@@ -481,8 +476,7 @@ function PublicTraderPage() {
                           background: "#ffffff",
                           boxShadow: "0 6px 18px rgba(15, 23, 42, 0.08)",
                           transition: "all 0.2s ease",
-                          transform:
-                            index % 2 === 0 ? "translateY(0px)" : "translateY(10px)",
+                          transform: index % 2 === 0 ? "translateY(0px)" : "translateY(10px)",
                           cursor: "pointer",
                           minHeight: 130,
                           display: "flex",
@@ -531,8 +525,7 @@ function PublicTraderPage() {
                                 marginTop: 12,
                                 fontSize: 14,
                                 fontWeight: 800,
-                                color:
-                                  trade.result === "Win" ? "#16a34a" : "#dc2626",
+                                color: trade.result === "Win" ? "#16a34a" : "#dc2626",
                               }}
                             >
                               {parseFloat(trade.r_multiple) > 0 ? "+" : ""}
@@ -578,18 +571,10 @@ function PublicTraderPage() {
               </div>
 
               <div style={{ display: "grid", gap: 14, marginTop: 18 }}>
-                <ReportRow
-                  label="Today"
-                  value={`${metrics.todayR >= 0 ? "+" : ""}${metrics.todayR.toFixed(1)}R`}
-                />
-                <ReportRow
-                  label="This Week"
-                  value={`${metrics.weekR >= 0 ? "+" : ""}${metrics.weekR.toFixed(1)}R`}
-                />
-                <ReportRow
-                  label="This Month"
-                  value={`${metrics.monthR >= 0 ? "+" : ""}${metrics.monthR.toFixed(1)}R`}
-                />
+                <ReportRow label="Today" value={`${metrics.todayR >= 0 ? "+" : ""}${metrics.todayR.toFixed(1)}R`} />
+                <ReportRow label="This Week" value={`${metrics.weekR >= 0 ? "+" : ""}${metrics.weekR.toFixed(1)}R`} />
+                <ReportRow label="This Month" value={`${metrics.monthR >= 0 ? "+" : ""}${metrics.monthR.toFixed(1)}R`} 
+/>
               </div>
             </div>
 
@@ -609,11 +594,7 @@ function PublicTraderPage() {
               <div style={{ display: "grid", gap: 14, marginTop: 18 }}>
                 <ReportRow label="Wins" value={metrics.wins} valueColor="#16a34a" />
                 <ReportRow label="Losses" value={metrics.losses} valueColor="#dc2626" />
-                <ReportRow
-                  label="Break Even"
-                  value={metrics.breakEven}
-                  valueColor="#eab308"
-                />
+                <ReportRow label="Break Even" value={metrics.breakEven} valueColor="#eab308" />
               </div>
             </div>
 

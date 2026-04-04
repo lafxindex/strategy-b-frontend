@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../api";
 import { useAuth } from "../context/AuthContext";
 
 function TraderDirectoryPage() {
   const [traders, setTraders] = useState([]);
+  const [traderStats, setTraderStats] = useState({});
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -12,7 +13,60 @@ function TraderDirectoryPage() {
     const fetchTraders = async () => {
       try {
         const res = await API.get("/public/traders");
-        setTraders(res.data || []);
+        const traderList = res.data || [];
+        setTraders(traderList);
+
+        const statsEntries = await Promise.all(
+          traderList.map(async (trader) => {
+            try {
+              const traderRes = await API.get(`/public/${trader.public_slug}`);
+              const trades = traderRes.data?.trades || [];
+
+              let wins = 0;
+              let losses = 0;
+              let breakEven = 0;
+
+              trades.forEach((t) => {
+                if (t.result === "Win") wins++;
+                if (t.result === "Loss") losses++;
+                if (t.result === "Break Even") breakEven++;
+              });
+
+              const completed = wins + losses + breakEven;
+              const winRate =
+                completed > 0 ? ((wins / completed) * 100).toFixed(0) : "0";
+
+              const netR = trades.reduce((sum, trade) => {
+                const value = parseFloat(trade.r_multiple);
+                return sum + (Number.isNaN(value) ? 0 : value);
+              }, 0);
+
+              return [
+                trader.public_slug,
+                {
+                  netR,
+                  winRate,
+                  totalTrades: trades.length,
+                },
+              ];
+            } catch (err) {
+              console.error(
+                `Failed to fetch stats for ${trader.public_slug}:`,
+                err
+              );
+              return [
+                trader.public_slug,
+                {
+                  netR: 0,
+                  winRate: "0",
+                  totalTrades: 0,
+                },
+              ];
+            }
+          })
+        );
+
+        setTraderStats(Object.fromEntries(statsEntries));
       } catch (err) {
         console.error("Failed to fetch traders:", err);
       } finally {
@@ -22,6 +76,18 @@ function TraderDirectoryPage() {
 
     fetchTraders();
   }, []);
+
+  const sortedTraders = useMemo(() => {
+    return [...traders].sort((a, b) => {
+      const aStats = traderStats[a.public_slug];
+      const bStats = traderStats[b.public_slug];
+
+      const aNet = aStats?.netR || 0;
+      const bNet = bStats?.netR || 0;
+
+      return bNet - aNet;
+    });
+  }, [traders, traderStats]);
 
   return (
     <div
@@ -33,7 +99,6 @@ function TraderDirectoryPage() {
       }}
     >
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -86,7 +151,6 @@ function TraderDirectoryPage() {
           </div>
         </div>
 
-        {/* Intro */}
         <div
           style={{
             background: "#fff",
@@ -96,19 +160,16 @@ function TraderDirectoryPage() {
             boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
           }}
         >
-          <h1 style={{ margin: 0, fontSize: 32 }}>
-            Meet the Traders
-          </h1>
+          <h1 style={{ margin: 0, fontSize: 32 }}>Meet the Traders</h1>
           <p style={{ color: "#6b7280", marginTop: 10 }}>
-            Explore trader dashboards and performance across the Lafx 
-Index platform.
+            Explore trader dashboards and performance across the Lafx Index
+            platform.
           </p>
         </div>
 
-        {/* Content */}
         {loading ? (
           <div style={cardStyle}>Loading traders...</div>
-        ) : traders.length === 0 ? (
+        ) : sortedTraders.length === 0 ? (
           <div style={cardStyle}>No traders found.</div>
         ) : (
           <div
@@ -118,58 +179,165 @@ Index platform.
               gap: 18,
             }}
           >
-            {traders.map((trader, index) => (
-              <Link
-                key={trader.id}
-                to={`/trader/${trader.public_slug}`}
-                style={{ textDecoration: "none", color: "inherit" }}
-              >
-                <div
-                  style={{
-                    ...cardStyle,
-                    transform:
-                      index % 2 === 0 ? "translateY(0px)" : 
-"translateY(8px)",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform =
-                      index % 2 === 0
-                        ? "translateY(0px)"
-                        : "translateY(8px)";
-                  }}
+            {sortedTraders.map((trader, index) => {
+              const stats = traderStats[trader.public_slug] || {
+                netR: 0,
+                winRate: "0",
+                totalTrades: 0,
+              };
+
+              const netRTone = stats.netR >= 0 ? "#16a34a" : "#dc2626";
+
+              const rankBackground =
+                index === 0
+                  ? "#d4af37"
+                  : index === 1
+                  ? "#c0c0c0"
+                  : index === 2
+                  ? "#cd7f32"
+                  : "#111827";
+
+              return (
+                <Link
+                  key={trader.id}
+                  to={`/trader/${trader.public_slug}`}
+                  style={{ textDecoration: "none", color: "inherit" }}
                 >
-                  <div style={{ display: "flex", gap: 14 }}>
-                    <img
-                      src={trader.avatar_url || "/logo.png"}
-                      alt={trader.display_name}
+                  <div
+                    style={{
+                      ...cardStyle,
+                      position: "relative",
+                      transform:
+                        index % 2 === 0 ? "translateY(0px)" : "translateY(8px)",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-4px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 16px 32px rgba(15, 23, 42, 0.12)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform =
+                        index % 2 === 0 ? "translateY(0px)" : "translateY(8px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 8px 24px rgba(0,0,0,0.06)";
+                    }}
+                  >
+                    <div
                       style={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: "50%",
-                        objectFit: "cover",
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        background: rankBackground,
+                        color: "#fff",
+                        borderRadius: 999,
+                        padding: "4px 8px",
+                        fontSize: 12,
+                        fontWeight: 800,
                       }}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 800, fontSize: 20 }}>
-                        {trader.display_name}
-                      </div>
-                      <div style={{ color: "#6b7280", fontSize: 14 }}>
-                        @{trader.public_slug}
+                    >
+                      #{index + 1}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 14 }}>
+                      <img
+                        src={trader.avatar_url || "/logo.png"}
+                        alt={trader.display_name}
+                        style={{
+                          width: 60,
+                          height: 60,
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 20 }}>
+                          {trader.display_name}
+                        </div>
+                        <div style={{ color: "#6b7280", fontSize: 14 }}>
+                          @{trader.public_slug}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div style={{ marginTop: 20, color: "#2563eb", 
-fontWeight: 700 }}>
-                    View Public Dashboard →
+                    <div
+                      style={{
+                        marginTop: 18,
+                        padding: "14px 16px",
+                        borderRadius: 14,
+                        background: "#f9fafb",
+                        border: "1px solid #e5e7eb",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 16,
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={labelStyle}>Net R</div>
+                        <div
+                          style={{
+                            marginTop: 6,
+                            fontSize: 22,
+                            fontWeight: 800,
+                            color: netRTone,
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          {stats.netR >= 0 ? "+" : ""}
+                          {stats.netR.toFixed(1)}R
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          width: 1,
+                          alignSelf: "stretch",
+                          background: "#d4af37",
+                          opacity: 0.9,
+                        }}
+                      />
+
+                      <div style={{ flex: 1, textAlign: "right" }}>
+                        <div style={labelStyle}>Win Rate</div>
+                        <div
+                          style={{
+                            marginTop: 6,
+                            fontSize: 22,
+                            fontWeight: 800,
+                            color: "#111827",
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          {stats.winRate}%
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: 12,
+                        color: "#9ca3af",
+                      }}
+                    >
+                      {stats.totalTrades} trade
+                      {stats.totalTrades === 1 ? "" : "s"}
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 20,
+                        color: "#2563eb",
+                        fontWeight: 700,
+                      }}
+                    >
+                      View Public Dashboard →
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
@@ -191,6 +359,13 @@ const buttonStyle = {
   padding: "10px 16px",
   borderRadius: 10,
   fontWeight: 700,
+};
+
+const labelStyle = {
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#6b7280",
+  textTransform: "uppercase",
 };
 
 export default TraderDirectoryPage;

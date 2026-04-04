@@ -188,14 +188,17 @@ function TraderDirectoryPage() {
 
               const netRTone = stats.netR >= 0 ? "#16a34a" : "#dc2626";
 
-              const rankBackground =
+              const rankDisplay =
                 index === 0
-                  ? "#d4af37"
+                  ? "🥇"
                   : index === 1
-                  ? "#c0c0c0"
+                  ? "🥈"
                   : index === 2
-                  ? "#cd7f32"
-                  : "#111827";
+                  ? "🥉"
+                  : null;
+
+              const isTopThree = index < 3;
+              const isTopOne = index === 0;
 
               return (
                 <Link
@@ -207,37 +210,47 @@ function TraderDirectoryPage() {
                     style={{
                       ...cardStyle,
                       position: "relative",
+                      boxShadow: isTopOne
+                        ? "0 12px 32px rgba(212,175,55,0.25), 0 0 0 1px rgba(212,175,55,0.4)"
+                        : "0 8px 24px rgba(0,0,0,0.06)",
                       transform:
                         index % 2 === 0 ? "translateY(0px)" : "translateY(8px)",
                       transition: "all 0.2s ease",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "translateY(-4px)";
-                      e.currentTarget.style.boxShadow =
-                        "0 16px 32px rgba(15, 23, 42, 0.12)";
+                      e.currentTarget.style.boxShadow = isTopOne
+                        ? "0 16px 36px rgba(212,175,55,0.32), 0 0 0 1px rgba(212,175,55,0.48)"
+                        : "0 16px 32px rgba(15, 23, 42, 0.12)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform =
                         index % 2 === 0 ? "translateY(0px)" : "translateY(8px)";
-                      e.currentTarget.style.boxShadow =
-                        "0 8px 24px rgba(0,0,0,0.06)";
+                      e.currentTarget.style.boxShadow = isTopOne
+                        ? "0 12px 32px rgba(212,175,55,0.25), 0 0 0 1px rgba(212,175,55,0.4)"
+                        : "0 8px 24px rgba(0,0,0,0.06)";
                     }}
                   >
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 12,
-                        right: 12,
-                        background: rankBackground,
-                        color: "#fff",
-                        borderRadius: 999,
-                        padding: "4px 8px",
-                        fontSize: 12,
-                        fontWeight: 800,
-                      }}
-                    >
-                      #{index + 1}
-                    </div>
+                    {isTopThree && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 12,
+                          right: 12,
+                          background: "#111827",
+                          color: "#fff",
+                          borderRadius: 999,
+                          padding: "6px 10px",
+                          fontSize: 16,
+                          fontWeight: 800,
+                          boxShadow: isTopOne
+                            ? "0 0 0 2px rgba(212,175,55,0.6), 0 0 18px rgba(212,175,55,0.6)"
+                            : "0 4px 12px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        {rankDisplay}
+                      </div>
+                    )}
 
                     <div style={{ display: "flex", gap: 14 }}>
                       <img
@@ -349,7 +362,6 @@ const cardStyle = {
   background: "#fff",
   borderRadius: 18,
   padding: 22,
-  boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
 };
 
 const buttonStyle = {
